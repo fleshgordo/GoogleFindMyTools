@@ -1,8 +1,8 @@
 // Initialize map
 const INIT_LAT = "46.5202958";
 const INIT_LON = "6.6304485";
-
-const map = L.map("map").setView([INIT_LAT, INIT_LON], 10);
+const INIT_ZOOM = 10;
+const map = L.map("map").setView([INIT_LAT, INIT_LON], INIT_ZOOM);
 
 // Add a minimal tile layer (CartoDB Positron)
 L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
@@ -15,6 +15,7 @@ L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", {
 // Store all markers by file
 const allMarkers = {};
 const allPoints = {};
+const allPolylines = {}; // Add this line to store polylines by file
 let colorIndex = 0;
 const colors = [
   "#e41a1c",
@@ -240,8 +241,12 @@ async function processData(file, isUpdate = false) {
   // Combine points for processing
   const allFilePoints = [...existingPoints, ...newPoints];
 
-  // Store updated points
-  allPoints[file.name] = allFilePoints;
+  // Store updated points, sorted by timestamp (ascending)
+  allPoints[file.name] = allFilePoints.slice().sort((a, b) => {
+    const tA = new Date(a.timestamp || a.recorded_at).getTime();
+    const tB = new Date(b.timestamp || b.recorded_at).getTime();
+    return tA - tB;
+  });
 
   // Find most recent point
   let mostRecentPoint = allFilePoints[0];
@@ -297,6 +302,13 @@ async function processData(file, isUpdate = false) {
       fillOpacity: opacity * 0.8,
     }).addTo(map);
 
+    // Sort allPoints[file.name] by timestamp (ascending)
+    allPoints[file.name].sort((a, b) => {
+      const tA = new Date(a.timestamp).getTime();
+      const tB = new Date(b.timestamp).getTime();
+      return tA - tB;
+    });
+
     marker.bindPopup(`
       <strong>Point ${allPoints[file.name].indexOf(point) + 1}</strong><br>
       Latitude: ${lat.toFixed(6)}<br>
@@ -321,18 +333,14 @@ async function processData(file, isUpdate = false) {
 
   // Update or create sidebar entry
   updateSidebar(file.name, allFilePoints, color, mostRecentIndex);
+  updatePolyline(file.name, allFilePoints, color); // Add this line
 
   // Show control buttons
   document.getElementById("fitAllBtn").style.display = "inline-block";
   document.getElementById("clearBtn").style.display = "inline-block";
 
   // Focus on most recent point if requested
-  if (
-    !isUpdate ||
-    newPoints.some(
-      (p) => (p.timestamp || p.recorded_at) === mostRecentTimestamp
-    )
-  ) {
+  if (!isUpdate || newPoints.some((p) => p.timestamp === mostRecentTimestamp)) {
     setTimeout(() => {
       map.setView([mrlat, mrlng], 16);
       // Find marker for most recent point
@@ -352,6 +360,42 @@ async function processData(file, isUpdate = false) {
   return true;
 }
 
+// Add this function to create/update polylines
+function updatePolyline(fileName, points, color) {
+  // Remove existing polyline if it exists
+  if (allPolylines[fileName]) {
+    map.removeLayer(allPolylines[fileName]);
+  }
+
+  // Sort points by timestamp
+  const sortedPoints = [...points].sort((a, b) => {
+    const tA = new Date(a.timestamp || a.recorded_at).getTime();
+    const tB = new Date(b.timestamp || b.recorded_at).getTime();
+    return tA - tB;
+  });
+
+  // Create line coordinates
+  const lineCoords = sortedPoints.map((point) => [
+    parseFloat(point.lat),
+    parseFloat(point.lon),
+  ]);
+
+  // Create the polyline
+  allPolylines[fileName] = L.polyline(lineCoords, {
+    color: color,
+    weight: 2,
+    opacity: 0.5,
+    dashArray: "2, 8", // Shorter dashes and longer gaps for a dotted effect
+    smoothFactor: 1,
+  });
+
+  // Only add to map if checkbox is checked
+  const showLinesCheckbox = document.getElementById("showLinesCheckbox");
+  if (showLinesCheckbox.checked) {
+    allPolylines[fileName].addTo(map);
+  }
+}
+
 // Simplified sidebar update function
 function updateSidebar(fileName, points, color, mostRecentIndex) {
   const fileNameOnly = fileName.split(/[\\/]/).pop();
@@ -359,32 +403,46 @@ function updateSidebar(fileName, points, color, mostRecentIndex) {
     (div) => div.querySelector("strong").textContent === fileNameOnly
   );
 
+  // Sort points by timestamp (ascending)
+  const sortedPoints = points.slice().sort((a, b) => {
+    const tA = new Date(a.timestamp).getTime();
+    const tB = new Date(b.timestamp).getTime();
+    return tA - tB;
+  });
+
+  // Find new index of most recent point after sorting
+  const sortedMostRecentIndex = sortedPoints.findIndex(
+    (p) => p.timestamp === points[mostRecentIndex].timestamp
+  );
+
   const html = `
     <div>
-      <span class="color-indicator" style="background-color: ${color};"></span>
-      <strong>${fileNameOnly}</strong> (${points.length} points)
+        <span class="color-indicator" style="background-color: ${color};"></span>
+        <strong>${fileNameOnly}</strong> (${sortedPoints.length} points)
     </div>
     <div class="point-list">
-      ${points
-        .map(
-          (point, i) => `
-        <div class="point-item ${i === mostRecentIndex ? "recent-point" : ""}" 
-             data-file="${fileName}" data-index="${i}">
-          ${point.posname || `Point ${i + 1}`}
-          <div class="timestamp">${formatTimestamp(
-            point.timestamp || point.recorded_at
-          )}</div>
-          ${
-            i === mostRecentIndex
-              ? '<span class="latest-indicator">Latest</span>'
-              : ""
-          }
-        </div>
-      `
-        )
-        .join("")}
+        ${sortedPoints
+          .map(
+            (point, i) => `
+            <div class="point-item ${
+              i === sortedMostRecentIndex ? "recent-point" : ""
+            }" 
+                     data-file="${fileName}" data-index="${points.indexOf(
+              point
+            )}">
+                ${`Point ${i + 1}`}
+                <div class="timestamp">${formatTimestamp(point.timestamp)}</div>
+                ${
+                  i === sortedMostRecentIndex
+                    ? '<span class="latest-indicator">Latest</span>'
+                    : ""
+                }
+            </div>
+        `
+          )
+          .join("")}
     </div>
-  `;
+`;
 
   if (existingDiv) {
     // Update existing div
@@ -503,10 +561,16 @@ document.getElementById("clearBtn").addEventListener("click", function () {
     });
   });
 
+  // Clear polylines too
+  Object.keys(allPolylines).forEach((fileName) => {
+    map.removeLayer(allPolylines[fileName]);
+  });
+
   // Clear stored data
   colorIndex = 0;
   Object.keys(allMarkers).forEach((key) => delete allMarkers[key]);
   Object.keys(allPoints).forEach((key) => delete allPoints[key]);
+  Object.keys(allPolylines).forEach((key) => delete allPolylines[key]);
 
   // Clear UI
   document.getElementById("datasets").innerHTML = "";
@@ -514,8 +578,25 @@ document.getElementById("clearBtn").addEventListener("click", function () {
   document.getElementById("clearBtn").style.display = "none";
 
   // Reset map view
-  map.setView([INIT_LAT, INIT_LON], 12);
+  map.setView([INIT_LAT, INIT_LON], INIT_ZOOM);
 });
 
 // Load available files on initial page load
 loadAvailableFiles();
+
+// Add this near the other event listeners at the bottom of the file
+document
+  .getElementById("showLinesCheckbox")
+  .addEventListener("change", function () {
+    const showLines = this.checked;
+
+    Object.keys(allPolylines).forEach((fileName) => {
+      const polyline = allPolylines[fileName];
+
+      if (showLines) {
+        polyline.addTo(map);
+      } else {
+        map.removeLayer(polyline);
+      }
+    });
+  });
