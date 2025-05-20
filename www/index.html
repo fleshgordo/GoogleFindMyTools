@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Beacon Finder</title>
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="./css/leaflet.css" />
+    <link rel="stylesheet" href="./css/style.css" />
+  </head>
+  <body>
+    <div id="container">
+      <div id="sidebar" class="sidebar-expanded">
+        <div id="sidebar-toggle">
+          <span class="toggle-icon">❮</span>
+        </div>
+        <div id="sidebar-content">
+          <h2>𝒯𝓇𝒶𝒸𝓀𝒾𝓃𝑔 𝓌𝒾𝓉𝒽 ❤️</h2>
+
+          <select id="dataSelect" multiple size="5">
+            <option value="" disabled>Loading files...</option>
+          </select>
+          <button id="loadSelectedBtn">Load Selected Files</button>
+          <button id="updateDataBtn">Update Data</button>
+          <span
+            id="loadingIndicator"
+            class="loading-indicator"
+            style="display: none"
+            >Loading...</span
+          >
+
+          <div class="section-divider"></div>
+
+          <!-- <h3>Upload New Files</h3>
+          <div class="file-input">
+            <input type="file" id="fileInput" accept=".csv" multiple />
+            <button id="loadBtn">Load Files</button>
+          </div> -->
+
+          <div id="fileInfo"></div>
+
+          <h3>Datasets</h3>
+          <div id="datasets"></div>
+
+          <button id="fitAllBtn" style="display: none">Fit All Points</button>
+          <button id="clearBtn" style="display: none">Clear All</button>
+        </div>
+      </div>
+      <div id="map"></div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="./js/leaflet.js"></script>
+    <script src="./js/map.js"></script>
+    <script src="./js/sidebar.js"></script>
+  </body>
+</html>

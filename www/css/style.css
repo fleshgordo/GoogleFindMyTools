@@ -1,0 +1,176 @@
+body {
+  margin: 0;
+  padding: 0;
+  font-family: Arial, sans-serif;
+}
+#container {
+  display: flex;
+  height: 100vh;
+}
+/* Collapsible Sidebar Styles */
+#sidebar {
+  position: relative;
+  transition: width 0.3s ease;
+  overflow-x: hidden;
+  z-index: 1000;
+}
+
+.sidebar-expanded {
+  width: 300px;
+}
+
+.sidebar-collapsed {
+  width: 30px;
+}
+
+#sidebar-toggle {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  background-color: #fff;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  box-shadow: 0 1px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1001;
+}
+
+.sidebar-collapsed #sidebar-toggle {
+  right: 5px;
+}
+
+.toggle-icon {
+  font-size: 16px;
+  transition: transform 0.3s ease;
+}
+
+.sidebar-collapsed .toggle-icon {
+  transform: rotate(180deg);
+}
+
+#sidebar-content {
+  width: 280px;
+  transition: opacity 0.2s ease;
+}
+
+.sidebar-collapsed #sidebar-content {
+  opacity: 0;
+  pointer-events: none;
+}
+#map {
+  flex-grow: 1;
+  height: 100%;
+}
+.file-input {
+  margin-bottom: 15px;
+}
+.file-info {
+  margin-top: 10px;
+  padding: 8px;
+  background-color: #e9e9e9;
+  border-radius: 4px;
+}
+.point-list {
+  max-height: 200px;
+  overflow-y: auto;
+  margin-top: 10px;
+}
+.point-item {
+  padding: 5px;
+  margin: 2px 0;
+  cursor: pointer;
+  border-bottom: 1px solid #ddd;
+}
+.point-item:hover {
+  background-color: #e0e0e0;
+}
+.color-indicator {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-right: 5px;
+  border-radius: 50%;
+}
+h3 {
+  margin-top: 15px;
+  margin-bottom: 5px;
+}
+button {
+  padding: 8px 15px;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 10px;
+}
+button:hover {
+  background-color: #45a049;
+}
+.timestamp {
+  font-size: 0.8em;
+  color: #666;
+}
+select {
+  width: 100%;
+  padding: 8px;
+  margin-bottom: 10px;
+  border-radius: 4px;
+  border: 1px solid #ddd;
+}
+.section-divider {
+  height: 1px;
+  background-color: #ccc;
+  margin: 20px 0;
+}
+.loading-indicator {
+  display: inline-block;
+  margin-left: 10px;
+  color: #666;
+}
+
+/* Pulsating marker styles */
+.pulsating-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  position: relative;
+  animation: pulse 1.5s infinite ease-out;
+  box-shadow: 0 0 0 rgba(0, 0, 0, 0.4);
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0.7);
+  }
+
+  70% {
+    box-shadow: 0 0 0 20px rgba(0, 0, 0, 0);
+  }
+
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 0, 0, 0);
+  }
+}
+
+/* Recent point styling in sidebar */
+.recent-point {
+  font-weight: bold;
+  border-left: 3px solid #4caf50;
+  padding-left: 8px !important;
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+.latest-indicator {
+  font-size: 11px;
+  background-color: #4caf50;
+  color: white;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-left: 5px;
+  float: right;
+}
