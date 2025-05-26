@@ -25,8 +25,12 @@ def main():
     if os.path.exists(csv_file):
         with open(csv_file, newline="") as f:
             reader = csv.DictReader(f)
-            for row in reader:
-                seen_timestamps.add(row["timestamp"])
+            # Check if CSV has header by verifying fieldnames
+            if reader.fieldnames and "timestamp" in reader.fieldnames:
+                for row in reader:
+                    seen_timestamps.add(row["timestamp"])
+            else:
+                print(f"Warning: {csv_file} does not have the expected header.", file=sys.stderr)
 
     # Prepare to append new unique entries
     new_entries = []
