@@ -26,7 +26,7 @@
 #endif
 
 // This is the advertisement key / EID. Change it to your own EID.
-const char *eid_string = "INSERT_YOUR_ADVERTISEMENT_KEY_HERE";
+const char *eid_string = "cce53f5fffb64ad109b0b6865828587684938813";
 
 // Find My Device Network (FMDN) advertisement
 // Octet 	Value 	        Description
@@ -82,8 +82,8 @@ static void ble_start_advertising(uint8_t *adv_raw_data, size_t adv_raw_data_len
     struct ble_gap_adv_params adv_params = {
         .conn_mode = BLE_GAP_CONN_MODE_NON,
         .disc_mode = BLE_GAP_DISC_MODE_GEN,
-        .itvl_min = 0x20,
-        .itvl_max = 0x20
+        .itvl_min = 160,
+        .itvl_max = 160
     };
 
 
@@ -111,7 +111,12 @@ static void on_sync(void)
     // Start advertising
     ble_start_advertising(adv_raw_data, sizeof(adv_raw_data));
     //print adv raw data
-    ESP_LOGI(TAG, "adv_raw_data: %s", adv_raw_data);
+    ESP_LOGI(TAG, "adv_raw_data:");
+    for (int i = 0; i < sizeof(adv_raw_data); i++) {
+        printf("%02x ", adv_raw_data[i]);
+        if ((i + 1) % 8 == 0) printf("\n");
+    }
+    printf("\n");
 }
 #endif
 
@@ -157,9 +162,9 @@ void app_main() {
         ESP_ERROR_CHECK(esp_bluedroid_enable());
 
         // Set BLE TX power to 9 dBm
-        ESP_ERROR_CHECK(esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_P9));
-        ESP_ERROR_CHECK(esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_P9));
-        ESP_LOGI(TAG, "Set BLE TX Power to 9 dBm");
+        ESP_ERROR_CHECK(esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_DEFAULT, ESP_PWR_LVL_N0));
+        ESP_ERROR_CHECK(esp_ble_tx_power_set(ESP_BLE_PWR_TYPE_ADV, ESP_PWR_LVL_N0));
+        ESP_LOGI(TAG, "Set BLE TX Power to 0 dBm");
 
 
         ESP_ERROR_CHECK(esp_ble_gap_config_adv_data_raw(adv_raw_data, sizeof(adv_raw_data)));
@@ -167,9 +172,15 @@ void app_main() {
         // Configure advertisement parameters
         esp_ble_adv_params_t adv_params = {
 
-            // change those if you want to save power
-            .adv_int_min = 0x20,
-            .adv_int_max = 0x20,
+            // // change those if you want to save power
+            // .adv_int_min = 0x20,
+            // .adv_int_max = 0x20,
+            .adv_int_min = 0x0800;  // 1.28 seconds
+            .adv_int_max = 0x0800;
+
+            //    .adv_int_min = 0x4000;  // 10secs.
+            // .adv_int_max = 0x4000;
+        
 
             .adv_type = ADV_TYPE_NONCONN_IND,
             .own_addr_type = BLE_ADDR_TYPE_PUBLIC,

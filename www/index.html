@@ -7,52 +7,109 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="./css/leaflet.css" />
     <link rel="stylesheet" href="./css/style.css" />
+    <!-- Alpine.js -->
+    <script
+      defer
+      src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
   </head>
   <body>
-    <div id="container">
-      <div id="sidebar" class="sidebar-expanded">
-        <div id="sidebar-toggle">
-          <span class="toggle-icon">❮</span>
+    <div id="container" x-data="beaconFinder">
+      <div
+        id="sidebar"
+        :class="{ 'sidebar-expanded': !sidebarCollapsed, 'sidebar-collapsed': sidebarCollapsed }"
+      >
+        <div id="sidebar-toggle" @click="toggleSidebar">
+          <span
+            class="toggle-icon"
+            x-text="sidebarCollapsed ? '❯' : '❮'"
+          ></span>
         </div>
         <div id="sidebar-content">
           <h2>𝒯𝓇𝒶𝒸𝓀𝒾𝓃𝑔 𝓌𝒾𝓉𝒽 ❤️</h2>
 
-          <select id="dataSelect" multiple size="5">
-            <option value="" disabled>Loading files...</option>
+          <select id="dataSelect" multiple size="5" x-ref="dataSelect">
+            <template x-for="file in availableFiles" :key="file">
+              <option :value="file" x-text="file"></option>
+            </template>
+            <option x-show="availableFiles.length === 0" value="" disabled>
+              Loading files...
+            </option>
           </select>
-          <button id="loadSelectedBtn">Load Selected Files</button>
-          <button id="updateDataBtn">Update Data</button>
+          <button id="loadSelectedBtn" @click="loadSelectedFiles">
+            Load Selected Files
+          </button>
+          <button id="updateDataBtn" @click="updateSelectedFiles">
+            Update Data
+          </button>
           <span
             id="loadingIndicator"
             class="loading-indicator"
-            style="display: none"
+            x-show="isLoading"
             >Loading...</span
           >
 
           <div class="section-divider"></div>
 
-          <!-- <h3>Upload New Files</h3>
-          <div class="file-input">
-            <input type="file" id="fileInput" accept=".csv" multiple />
-            <button id="loadBtn">Load Files</button>
-          </div> -->
-
           <div id="fileInfo"></div>
-          <button id="fitAllBtn" style="display: none">Fit All Points</button>
-          <button id="clearBtn" style="display: none">Clear All</button>
+          <button id="fitAllBtn" @click="fitAllPoints" x-show="hasLoadedData">
+            Fit All Points
+          </button>
+          <button id="clearBtn" @click="clearAll" x-show="hasLoadedData">
+            Clear All
+          </button>
           <div class="checkbox-control">
-            <input type="checkbox" id="showLinesCheckbox" />
+            <input type="checkbox" id="showLinesCheckbox" x-model="showLines" />
             <label for="showLinesCheckbox">Show path lines</label>
           </div>
-          <div id="datasets"></div>
+          <div id="datasets">
+            <template x-for="(points, fileName) in filePoints" :key="fileName">
+              <div class="file-info" :data-file="fileName">
+                <div>
+                  <span
+                    class="color-indicator"
+                    :style="{ backgroundColor: fileColors[fileName] }"
+                  ></span>
+                  <strong x-text="fileName.split(/[\\/]/).pop()"></strong>
+                  <span x-text="`(${points.length} points)`"></span>
+                </div>
+                <div class="point-list">
+                  <template
+                    x-for="(point, i) in [...filePoints[fileName]].reverse()"
+                    :key="i"
+                  >
+                    <div
+                      class="point-item"
+                      :class="{ 'recent-point': filePoints[fileName].length - 1 - i === fileMostRecentIndices[fileName] }"
+                      :data-file="fileName"
+                      :data-index="filePoints[fileName].length - 1 - i"
+                      @click="pointClicked(fileName, filePoints[fileName].length - 1 - i)"
+                    >
+                      <span
+                        x-text="`Point ${filePoints[fileName].length - i}`"
+                      ></span>
+                      <div
+                        class="timestamp"
+                        x-text="formatTimestamp(point.timestamp)"
+                      ></div>
+                      <span
+                        class="latest-indicator"
+                        x-show="filePoints[fileName].length - 1 - i === fileMostRecentIndices[fileName]"
+                        >Latest</span
+                      >
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
         </div>
       </div>
-      <div id="map"></div>
+      <div id="map" x-ref="mapContainer"></div>
     </div>
 
     <!-- Leaflet JS -->
     <script src="./js/leaflet.js"></script>
-    <script src="./js/map.js"></script>
-    <script src="./js/sidebar.js"></script>
+    <script src="./js/app.js"></script>
   </body>
 </html>
